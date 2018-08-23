@@ -398,13 +398,6 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         Optional<File[]> files = Optional.ofNullable(dir.listFiles());
 
         return Arrays.stream(files.get()).filter(File::isFile).anyMatch(file -> file.getName().equals(step.name));
-
-       /*if (files == null)
-            return false;
-        for (File file : files) {
-            if (file.isFile() &&  file.getName().equals(step.name))
-                return true;
-        }*/
     }
 
     private void skipStage() {
