@@ -379,13 +379,10 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
 
-        boolean parameterSet = false;
+        Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
 
-        ParametersDefinitionProperty paramDefProp = job.getProperty(ParametersDefinitionProperty.class);
-
-        if ((paramDefProp != null) && (paramDefProp.getParameterDefinition("buildWithCheckpoint")) != null) {
-             parameterSet = true;
-        }
+       boolean parameterSet = paramDefProp.isPresent()
+                && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
 
         if (!parameterSet) {
             return false;
@@ -398,21 +395,22 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             return false;
         }
 
-        File[] files = dir.listFiles();
-        if (files == null)
+        Optional<File[]> files = Optional.ofNullable(dir.listFiles());
+
+        return Arrays.stream(files.get()).filter(File::isFile).anyMatch(file -> file.getName().equals(step.name));
+
+       /*if (files == null)
             return false;
         for (File file : files) {
             if (file.isFile() &&  file.getName().equals(step.name))
                 return true;
-        }
-        return false;
+        }*/
     }
 
-    private boolean skipStage() {
+    private void skipStage() {
             enter(run, getContext(), step.name, step.concurrency);
             exit(run);
             println(getContext(), "Skipping stage " + step.name);
-            return false;
     }
 }
 

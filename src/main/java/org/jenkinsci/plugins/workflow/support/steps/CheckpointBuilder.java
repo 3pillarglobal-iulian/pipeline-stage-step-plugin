@@ -15,6 +15,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class CheckpointBuilder extends Builder implements SimpleBuildStep {
 
@@ -42,23 +46,18 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
             return;
         }
 
-        File folder = new File(dirPath);
-        File[] listOfFiles = folder.listFiles();
+        Optional<File[]> arrayOfFiles = Optional.ofNullable(dir.listFiles());
 
         boolean fileExist = false;
 
-        if (listOfFiles != null) {
-            for (File file : listOfFiles) {
-                if (file.getName().equals(stageName)) {
-                    fileExist = true;
-                }
-            }
+        if (arrayOfFiles.isPresent()) {
+            fileExist = Arrays.stream(arrayOfFiles.get()).anyMatch(file -> file.getName().equals(stageName));
         }
+
         if (!fileExist) {
             File newFile = new File(dirPath + "/" + stageName);
             try {
               boolean fileCreated = newFile.createNewFile();
-
               if (!fileCreated) {
                   System.out.println("Couldn't create file");
               }
