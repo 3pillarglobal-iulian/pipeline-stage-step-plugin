@@ -32,9 +32,14 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     private void createStageNameFile(String jobName) {
         String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
         File dir = new File(dirPath);
+        boolean dirCreated = false;
 
         if(!dir.exists()){
-            dir.mkdir();
+            dirCreated = dir.mkdir();
+        }
+
+        if (!dirCreated && !dir.exists()) {
+            return;
         }
 
         File folder = new File(dirPath);
@@ -42,16 +47,21 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
 
         boolean fileExist = false;
 
-        for (File file : listOfFiles) {
-            if (file.getName().equals(stageName)) {
-                fileExist = true;
+        if (listOfFiles != null) {
+            for (File file : listOfFiles) {
+                if (file.getName().equals(stageName)) {
+                    fileExist = true;
+                }
             }
         }
-
         if (!fileExist) {
             File newFile = new File(dirPath + "/" + stageName);
             try {
-                newFile.createNewFile();
+              boolean fileCreated = newFile.createNewFile();
+
+              if (!fileCreated) {
+                  System.out.println("Couldn't create file");
+              }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -62,7 +72,6 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         EnvVars envVars = run.getEnvironment(taskListener);
         String jobName = envVars.get("JOB_BASE_NAME");
-        Executor executor = run.getExecutor();
 
         taskListener.getLogger().println(System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint");
         taskListener.getLogger().println("Checkpoint plugin");

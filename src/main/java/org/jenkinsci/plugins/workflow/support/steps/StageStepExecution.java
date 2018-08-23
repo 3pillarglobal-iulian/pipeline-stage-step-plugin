@@ -375,19 +375,34 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
     private static final long serialVersionUID = 1L;
 
-    public boolean canSkipStage() {
+    private boolean canSkipStage() {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
+
+        boolean parameterSet = false;
+
+        ParametersDefinitionProperty paramDefProp = job.getProperty(ParametersDefinitionProperty.class);
+
+        if ((paramDefProp != null) && (paramDefProp.getParameterDefinition("buildWithCheckpoint")) != null) {
+             parameterSet = true;
+        }
+
+        if (!parameterSet) {
+            return false;
+        }
 
         String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
         File dir = new File(path);
 
-        if (!dir.exists()) {
+        if (!dir.exists() && (dir.listFiles() == null)) {
             return false;
         }
 
-        for (File file : dir.listFiles()) {
-            if (file.getName().equals(step.name))
+        File[] files = dir.listFiles();
+        if (files == null)
+            return false;
+        for (File file : files) {
+            if (file.isFile() &&  file.getName().equals(step.name))
                 return true;
         }
         return false;
