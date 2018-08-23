@@ -33,7 +33,7 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
         return stageName;
     }
 
-    private void createStageNameFile(String jobName) {
+    private void createStageNameFile(String jobName, TaskListener taskListener) {
         String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
         File dir = new File(dirPath);
         boolean dirCreated = false;
@@ -61,6 +61,7 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
               if (!fileCreated) {
                   System.out.println("Couldn't create file");
               }
+                taskListener.getLogger().println("Checkpoint made in: " + dirPath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -71,11 +72,7 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         EnvVars envVars = run.getEnvironment(taskListener);
         String jobName = envVars.get("JOB_BASE_NAME");
-
-        taskListener.getLogger().println(System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint");
-        taskListener.getLogger().println("Checkpoint plugin");
-
-        createStageNameFile(jobName);
+        createStageNameFile(jobName, taskListener);
     }
 
     @Symbol("checkpoint")
