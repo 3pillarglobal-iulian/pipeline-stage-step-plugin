@@ -15,10 +15,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class CheckpointBuilder extends Builder implements SimpleBuildStep {
 

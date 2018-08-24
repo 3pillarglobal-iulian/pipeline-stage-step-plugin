@@ -8,6 +8,9 @@ import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -378,10 +381,9 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private boolean canSkipStage() {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
-
         Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
 
-       boolean parameterSet = paramDefProp.isPresent()
+        boolean parameterSet = paramDefProp.isPresent()
                 && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
 
         if (!parameterSet) {
@@ -389,21 +391,21 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         }
 
         String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
-        File dir = new File(path);
+        if (!(new File(path).exists())) { return false; }
 
-        if (!dir.exists() && (dir.listFiles() == null)) {
-            return false;
+        Path source = Paths.get(path);
+        try {
+            return Files.walk(source).filter(Files::isRegularFile).anyMatch(file -> file.getFileName().toString().equals(step.name));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        Optional<File[]> files = Optional.ofNullable(dir.listFiles());
-
-        return files.isPresent() &&  Arrays.stream(files.get()).filter(File::isFile).anyMatch(file -> file.getName().equals(step.name));
+        return false;
     }
 
     private void skipStage() {
-            enter(run, getContext(), step.name, step.concurrency);
-            exit(run);
-            println(getContext(), "Skipping stage " + step.name);
+        enter(run, getContext(), step.name, step.concurrency);
+        exit(run);
+        println(getContext(), "Skipping stage " + step.name);
     }
 }
 
