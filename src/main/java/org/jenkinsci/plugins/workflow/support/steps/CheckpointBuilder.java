@@ -15,6 +15,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -31,38 +34,47 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
         return stageName;
     }
 
-    private void createStageNameFile(String jobName, TaskListener taskListener) {
+    private void createCheckpointFile(String jobName, TaskListener taskListener) {
         String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
+
+        if (!createCheckpointDirIfDoesNotExist(dirPath)) { return; }
+
+        if (!checkpointFileExist(dirPath)) {
+            File checkpointFile = new File(dirPath + "/" + stageName);
+            createStageNameFile(checkpointFile);
+            taskListener.getLogger().println("Checkpoint made in: " + dirPath);
+        }
+    }
+
+    private boolean createCheckpointDirIfDoesNotExist(String dirPath) {
         File dir = new File(dirPath);
-        boolean dirCreated = false;
-
         if(!dir.exists()){
-            dirCreated = dir.mkdir();
+             if (!dir.mkdir()) {
+                 System.out.println("Error when creating directory");
+                 return false;
+             }
         }
+        return true;
+    }
 
-        if (!dirCreated && !dir.exists()) {
-            return;
+    private boolean checkpointFileExist(String path) {
+        Path source = Paths.get(path);
+        try {
+            return Files.walk(source).filter(Files::isRegularFile).anyMatch(file -> file.getFileName().toString().equals(stageName));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return false;
+    }
 
-        Optional<File[]> arrayOfFiles = Optional.ofNullable(dir.listFiles());
-
-        boolean fileExist = false;
-
-        if (arrayOfFiles.isPresent()) {
-            fileExist = Arrays.stream(arrayOfFiles.get()).anyMatch(file -> file.getName().equals(stageName));
-        }
-
-        if (!fileExist) {
-            File newFile = new File(dirPath + "/" + stageName);
-            try {
-              boolean fileCreated = newFile.createNewFile();
-              if (!fileCreated) {
-                  System.out.println("Couldn't create file");
-              }
-                taskListener.getLogger().println("Checkpoint made in: " + dirPath);
-            } catch (IOException e) {
-                e.printStackTrace();
+    private void createStageNameFile(File checkpointFile) {
+        try {
+            boolean fileCreated = checkpointFile.createNewFile();
+            if (!fileCreated) {
+                System.out.println("Couldn't create file");
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -70,7 +82,7 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         EnvVars envVars = run.getEnvironment(taskListener);
         String jobName = envVars.get("JOB_BASE_NAME");
-        createStageNameFile(jobName, taskListener);
+        createCheckpointFile(jobName, taskListener);
     }
 
     @Symbol("checkpoint")
