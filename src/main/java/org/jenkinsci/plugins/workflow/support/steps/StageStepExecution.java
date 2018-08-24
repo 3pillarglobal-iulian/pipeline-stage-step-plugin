@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import jenkins.model.CauseOfInterruption;
@@ -90,7 +91,6 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         node.addAction(new LabelAction(step.name));
         node.addAction(new StageActionImpl(step.name));
 
-        //getContext().setResult(Result.SUCCESS);
         enter(run, getContext(), step.name, step.concurrency);
         return false; // execute asynchronously
     }
@@ -381,18 +381,26 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private boolean canSkipStage() {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
-        Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
 
-        boolean parameterSet = paramDefProp.isPresent()
-                && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
-
-        if (!parameterSet) {
-            return false;
-        }
+        if (!isParameterSet(job)) { return false; }
 
         String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
-        if (!(new File(path).exists())) { return false; }
+        if (!checkpointFolderExist(path)) { return false; }
 
+        return checkpointFileExist(path);
+    }
+
+    private boolean isParameterSet(Job<?,?> job) {
+        Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
+       return paramDefProp.isPresent()
+                && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
+    }
+
+    private boolean checkpointFolderExist(String path) {
+        return new File(path).exists();
+    }
+
+    private boolean checkpointFileExist(String path) {
         Path source = Paths.get(path);
         try {
             return Files.walk(source).filter(Files::isRegularFile).anyMatch(file -> file.getFileName().toString().equals(step.name));
