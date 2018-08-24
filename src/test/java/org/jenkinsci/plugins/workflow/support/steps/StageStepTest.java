@@ -24,26 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
-import hudson.model.Action;
-import hudson.model.Cause;
-import hudson.model.CauseAction;
+
 import hudson.model.Result;
 
-import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
-import jenkins.model.ParameterizedJobMixIn;
-import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.cps.replay.ReplayAction;
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.steps.stage.Messages;
@@ -73,17 +61,14 @@ public class StageStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition("node {\n" +
-                        "\tstage ('Build') {\n" +
-                        "\t\techo 'I should NOT run'\n" +
-                        "\t}\n" +
-                        "\tstage ('Test') {\n" +
-                        "\t\techo 'I should run'\n" +
+                        "\tstage ('hello there') {\n" +
+                        "\t\techo 'yes I ran'\n" +
                         "\t}\n" +
                         "}", true));
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-               // story.j.assertLogContains("hello there", b);
-              //  story.j.assertLogContains("yes I ran", b);
-                //story.j.assertLogNotContains(Messages.StageStepExecution_non_block_mode_deprecated(), b);
+                story.j.assertLogContains("hello there", b);
+                story.j.assertLogContains("yes I ran", b);
+                story.j.assertLogNotContains(Messages.StageStepExecution_non_block_mode_deprecated(), b);
             }
         });
     }
