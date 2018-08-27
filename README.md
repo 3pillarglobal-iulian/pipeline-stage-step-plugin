@@ -15,7 +15,7 @@ I) In order to start a build with skipped checkpoint do the following:
 
 II) In order to build without checkpoints do the following:
 1. If you have a parameter named "buildWithCheckpoint" remove it.
-1.2. (Optional) Remove 'checkpoint STAGE_NAME' step calls from your code in order to delete older checkpoints.
-2. Build the job normally.
+2. (Optional) Remove 'checkpoint STAGE_NAME' step calls from your code in order to delete older checkpoints.
+3. Build the job normally.
 
 
