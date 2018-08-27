@@ -381,10 +381,13 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private boolean canSkipStage() {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
-
-        if (!isParameterSet(job)) { return false; }
-
         String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
+
+        if (!isParameterSet(job)) {
+            deleteCheckpointfile(path, step.name);
+            return false;
+        }
+
         if (!checkpointFolderExist(path)) { return false; }
 
         return checkpointFileExist(path);
@@ -392,9 +395,21 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
     private boolean isParameterSet(Job<?,?> job) {
         Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
-       return paramDefProp.isPresent()
+        return paramDefProp.isPresent()
                 && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
     }
+
+    private void deleteCheckpointfile(String path, String stageName) {
+        File file = new File(path + "/" + stageName);
+        if (file.exists()) {
+
+            if (file.delete()) {
+                println(getContext(), "Checkpoint " + stageName + " deleted.");
+            } else {
+                println(getContext(), "Checkpoint " + stageName + " coult NOT be deleted.");
+            }
+        }
+}
 
     private boolean checkpointFolderExist(String path) {
         return new File(path).exists();
