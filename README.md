@@ -1,7 +1,7 @@
 HOW TO INSTALL:
 
 1. First, you need to compile the plugin using the command 'mvn clean install'.
-2. Go in project folder/target and copy the file 'pipeline-stage-step.hpi' to "$JENKINS_HOME/plugins" (where $JENKINS_HOME is a system environment variable).
+2. Go in project folder/target and copy the file 'pipeline-stage-step.hpi' to "$JENKINS_HOME/plugins" (where $JENKINS_HOME is the system environment variable set by Jenkins).
 
 
 HOW TO USE:
