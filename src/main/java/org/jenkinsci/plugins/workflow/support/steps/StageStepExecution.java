@@ -16,9 +16,9 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
@@ -65,6 +65,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
         if (canSkipStage()) {
             skipStage();
+            return false;
         }
 
         if (getContext().hasBody()) { // recommended mode
@@ -383,8 +384,9 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         String jobName = job.getFullName();
         String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
 
+        //TODO: Check boolean parameter value
         if (!isParameterSet(job)) {
-            deleteCheckpointfile(path, step.name);
+            deleteCheckpointFile(path, step.name);
             return false;
         }
 
@@ -395,18 +397,23 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
     private boolean isParameterSet(Job<?,?> job) {
         Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
+       /* if (paramDefProp.isPresent()) {
+           ParameterValue paramValue = paramDefProp.get().getParameterDefinition("buildWithCheckpoint").getDefaultParameterValue();
+            if (paramValue != null)
+                    println(getContext(), "Parameter value: " + paramValue.getValue().toString());
+        }*/
+
         return paramDefProp.isPresent()
                 && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
     }
 
-    private void deleteCheckpointfile(String path, String stageName) {
+    private void deleteCheckpointFile(String path, String stageName) {
         File file = new File(path + "/" + stageName);
         if (file.exists()) {
-
             if (file.delete()) {
                 println(getContext(), "Checkpoint " + stageName + " deleted.");
             } else {
-                println(getContext(), "Checkpoint " + stageName + " coult NOT be deleted.");
+                println(getContext(), "Checkpoint " + stageName + " could NOT be deleted.");
             }
         }
 }
@@ -426,6 +433,8 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     }
 
     private void skipStage() {
+        node.addAction(new LabelAction(step.name));
+        node.addAction(new StageActionImpl(step.name));
         enter(run, getContext(), step.name, step.concurrency);
         exit(run);
         println(getContext(), "Skipping stage " + step.name);
