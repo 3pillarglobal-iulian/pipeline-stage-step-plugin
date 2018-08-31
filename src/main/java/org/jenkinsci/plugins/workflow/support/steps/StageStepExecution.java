@@ -24,6 +24,8 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
+import org.jenkinsci.plugins.workflow.cps.replay.ReplayAction;
+import org.jenkinsci.plugins.workflow.cps.replay.ReplayCause;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -382,29 +384,33 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private boolean canSkipStage() {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
-        String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
 
-        //TODO: Check boolean parameter value
-        if (!isParameterSet(job)) {
-            deleteCheckpointFile(path, step.name);
-            return false;
-        }
+       if (!isBuildReplayed()) {
+           return false;
+       }
+       int replayedBuildNumber = getReplayedBuildNumber();
+       String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint/" + replayedBuildNumber;
+       if (!checkpointFolderExist(path)) { return false; }
 
-        if (!checkpointFolderExist(path)) { return false; }
-
-        return checkpointFileExist(path);
+       return checkpointFileExist(path);
     }
 
-    private boolean isParameterSet(Job<?,?> job) {
-        Optional<ParametersDefinitionProperty> paramDefProp = Optional.ofNullable(job.getProperty(ParametersDefinitionProperty.class));
-       /* if (paramDefProp.isPresent()) {
-           ParameterValue paramValue = paramDefProp.get().getParameterDefinition("buildWithCheckpoint").getDefaultParameterValue();
-            if (paramValue != null)
-                    println(getContext(), "Parameter value: " + paramValue.getValue().toString());
-        }*/
+    private boolean isBuildReplayed() {
+        ReplayCause replayCause = run.getCause(ReplayCause.class);
+        if (replayCause != null) {
+            int replayBuildNumber = replayCause.getOriginalNumber();
+            println(getContext(), "Replayed build number: " + replayBuildNumber);
+            return true;
+        }
+        return false;
+    }
 
-        return paramDefProp.isPresent()
-                && Optional.ofNullable(paramDefProp.get().getParameterDefinition("buildWithCheckpoint")).isPresent();
+    private int getReplayedBuildNumber() {
+        ReplayCause replayCause = run.getCause(ReplayCause.class);
+        if (replayCause != null) {
+            return replayCause.getOriginalNumber();
+        }
+        return 0;
     }
 
     private void deleteCheckpointFile(String path, String stageName) {

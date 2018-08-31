@@ -34,8 +34,8 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
         return stageName;
     }
 
-    private void createCheckpointFile(String jobName, TaskListener taskListener) {
-        String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
+    private void createCheckpointFile(String jobName, int buildNumber, TaskListener taskListener) {
+        String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint/" + buildNumber;
 
         if (!createCheckpointDirIfDoesNotExist(dirPath)) { return; }
 
@@ -82,7 +82,7 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
         EnvVars envVars = run.getEnvironment(taskListener);
         String jobName = envVars.get("JOB_BASE_NAME");
-        createCheckpointFile(jobName, taskListener);
+        createCheckpointFile(jobName, run.number ,taskListener);
     }
 
     @Symbol("checkpoint")
