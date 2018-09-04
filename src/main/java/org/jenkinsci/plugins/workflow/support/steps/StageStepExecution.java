@@ -385,32 +385,27 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         Job<?, ?> job = run.getParent();
         String jobName = job.getFullName();
 
-       if (!isBuildReplayed()) {
-           return false;
-       }
-       int replayedBuildNumber = getReplayedBuildNumber();
-       String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint/" + replayedBuildNumber;
-       if (!checkpointFolderExist(path)) { return false; }
+        if (!isBuildReplayed()) {
+            return false;
+        }
+        int replayedBuildNumber = getReplayedBuildNumber();
+        String path = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint/" + replayedBuildNumber;
+        if (!checkpointFolderExist(path)) { return false; }
 
-       return checkpointFileExist(path);
+        return checkpointFileExist(path);
     }
 
     private boolean isBuildReplayed() {
-        ReplayCause replayCause = run.getCause(ReplayCause.class);
-        if (replayCause != null) {
-            int replayBuildNumber = replayCause.getOriginalNumber();
-            println(getContext(), "Replayed build number: " + replayBuildNumber);
-            return true;
-        }
-        return false;
+        return getBuildReplayCause().isPresent();
+    }
+
+    private Optional<ReplayCause> getBuildReplayCause() {
+        return Optional.ofNullable(run.getCause(ReplayCause.class));
     }
 
     private int getReplayedBuildNumber() {
-        ReplayCause replayCause = run.getCause(ReplayCause.class);
-        if (replayCause != null) {
-            return replayCause.getOriginalNumber();
-        }
-        return 0;
+        Optional<ReplayCause> replayCause = getBuildReplayCause();
+        return replayCause.map(ReplayCause::getOriginalNumber).orElse(-1);
     }
 
     private void deleteCheckpointFile(String path, String stageName) {
@@ -422,7 +417,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 println(getContext(), "Checkpoint " + stageName + " could NOT be deleted.");
             }
         }
-}
+    }
 
     private boolean checkpointFolderExist(String path) {
         return new File(path).exists();
@@ -446,5 +441,3 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         println(getContext(), "Skipping stage " + step.name);
     }
 }
-
-

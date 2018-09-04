@@ -35,24 +35,26 @@ public class CheckpointBuilder extends Builder implements SimpleBuildStep {
     }
 
     private void createCheckpointFile(String jobName, int buildNumber, TaskListener taskListener) {
-        String dirPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint/" + buildNumber;
+        String checkpointRootPath = System.getenv("JENKINS_HOME") + "/workspace/" + jobName + "@checkpoint";
+        String checkpointBuildDirPath = checkpointRootPath + "/" + buildNumber;
 
-        if (!createCheckpointDirIfDoesNotExist(dirPath)) { return; }
+        if (!createDirIfDoesNotExist(checkpointRootPath)) { return;}
+        if (!createDirIfDoesNotExist(checkpointBuildDirPath)) { return;}
 
-        if (!checkpointFileExist(dirPath)) {
-            File checkpointFile = new File(dirPath + "/" + stageName);
+        if (!checkpointFileExist(checkpointBuildDirPath)) {
+            File checkpointFile = new File(checkpointBuildDirPath + "/" + stageName);
             createStageNameFile(checkpointFile);
-            taskListener.getLogger().println("Checkpoint made in: " + dirPath);
+            taskListener.getLogger().println("Checkpoint made in: " + checkpointBuildDirPath);
         }
     }
 
-    private boolean createCheckpointDirIfDoesNotExist(String dirPath) {
+    private boolean createDirIfDoesNotExist(String dirPath) {
         File dir = new File(dirPath);
         if(!dir.exists()){
-             if (!dir.mkdir()) {
-                 System.out.println("Error when creating directory");
-                 return false;
-             }
+            if (!dir.mkdir()) {
+                System.out.println("Error when creating root directory");
+                return false;
+            }
         }
         return true;
     }

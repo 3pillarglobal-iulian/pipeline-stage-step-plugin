@@ -55,7 +55,7 @@ public class StageStepTest {
         StageStepExecution.clear();
     }
 
-    @Issue("JENKINS-26107")
+   /* @Issue("JENKINS-26107")
     @Test public void blockMode() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -85,6 +85,7 @@ public class StageStepTest {
             }
         });
     }
+*/
 
     @Test public void basics() throws Exception {
         // Timeline (A has concurrency 2, B 1):
@@ -100,12 +101,12 @@ public class StageStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                         "stage(name: 'A', concurrency: 2);\n" +
-                        "echo('in A');\n" +
-                        "semaphore('B');\n" +
-                        "stage(name: 'B', concurrency: 1);\n" +
-                        "echo('in B');\n" +
-                        "semaphore('X');\n" +
-                        "echo('done')"));
+                                "echo('in A');\n" +
+                                "semaphore('B');\n" +
+                                "stage(name: 'B', concurrency: 1);\n" +
+                                "echo('in B');\n" +
+                                "semaphore('X');\n" +
+                                "echo('done')"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 e1.waitForSuspension();
@@ -118,50 +119,50 @@ public class StageStepTest {
                 CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
                 e3.waitForSuspension();
                 assertTrue(b3.isBuilding());
-                    story.j.assertLogContains("in A", b1);
-                    story.j.assertLogNotContains("in B", b1);
-                    story.j.assertLogContains("in A", b2);
-                    story.j.assertLogNotContains("in B", b2);
-                    story.j.assertLogNotContains("in A", b3);
-                    SemaphoreStep.success("B/1", null);
-                    e1.waitForSuspension();
-                    assertTrue(b1.isBuilding());
-                    e2.waitForSuspension();
-                    assertTrue(b2.isBuilding());
-                    e3.waitForSuspension();
-                    assertTrue(b3.isBuilding());
-                    story.j.assertLogContains("in B", b1);
-                    story.j.assertLogNotContains("done", b1);
-                    story.j.assertLogNotContains("in B", b2);
-                    story.j.assertLogContains("in A", b3);
-                    story.j.assertLogNotContains("in B", b3);
-                    SemaphoreStep.success("B/2", null);
-                    e1.waitForSuspension();
-                    assertTrue(b1.isBuilding());
-                    e2.waitForSuspension();
-                    assertTrue(b2.isBuilding());
-                    e3.waitForSuspension();
-                    assertTrue(b3.isBuilding());
-                    story.j.assertLogNotContains("done", b1);
-                    story.j.assertLogNotContains("in B", b2);
-                    story.j.assertLogNotContains("in B", b3);
-                    SemaphoreStep.success("B/3", null);
-                    e1.waitForSuspension();
-                    assertTrue(b1.isBuilding());
-                    e2.waitForSuspension();
-                    e3.waitForSuspension();
-                    story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b2));
-                    story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b2);
-                    InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
-                    assertNotNull(iba);
-                    List<CauseOfInterruption> causes = iba.getCauses();
-                    assertEquals(1, causes.size());
-                    assertEquals(StageStepExecution.CanceledCause.class, causes.get(0).getClass());
-                    assertEquals(b3, ((StageStepExecution.CanceledCause) causes.get(0)).getNewerBuild());
-                    assertTrue(b3.isBuilding());
-                    story.j.assertLogNotContains("done", b1);
-                    story.j.assertLogNotContains("in B", b2);
-                    story.j.assertLogNotContains("in B", b3);
+                story.j.assertLogContains("in A", b1);
+                story.j.assertLogNotContains("in B", b1);
+                story.j.assertLogContains("in A", b2);
+                story.j.assertLogNotContains("in B", b2);
+                story.j.assertLogNotContains("in A", b3);
+                SemaphoreStep.success("B/1", null);
+                e1.waitForSuspension();
+                assertTrue(b1.isBuilding());
+                e2.waitForSuspension();
+                assertTrue(b2.isBuilding());
+                e3.waitForSuspension();
+                assertTrue(b3.isBuilding());
+                story.j.assertLogContains("in B", b1);
+                story.j.assertLogNotContains("done", b1);
+                story.j.assertLogNotContains("in B", b2);
+                story.j.assertLogContains("in A", b3);
+                story.j.assertLogNotContains("in B", b3);
+                SemaphoreStep.success("B/2", null);
+                e1.waitForSuspension();
+                assertTrue(b1.isBuilding());
+                e2.waitForSuspension();
+                assertTrue(b2.isBuilding());
+                e3.waitForSuspension();
+                assertTrue(b3.isBuilding());
+                story.j.assertLogNotContains("done", b1);
+                story.j.assertLogNotContains("in B", b2);
+                story.j.assertLogNotContains("in B", b3);
+                SemaphoreStep.success("B/3", null);
+                e1.waitForSuspension();
+                assertTrue(b1.isBuilding());
+                e2.waitForSuspension();
+                e3.waitForSuspension();
+                story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b2));
+                story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b2);
+                InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
+                assertNotNull(iba);
+                List<CauseOfInterruption> causes = iba.getCauses();
+                assertEquals(1, causes.size());
+                assertEquals(StageStepExecution.CanceledCause.class, causes.get(0).getClass());
+                assertEquals(b3, ((StageStepExecution.CanceledCause) causes.get(0)).getNewerBuild());
+                assertTrue(b3.isBuilding());
+                story.j.assertLogNotContains("done", b1);
+                story.j.assertLogNotContains("in B", b2);
+                story.j.assertLogNotContains("in B", b3);
             }
         });
         story.addStep(new Statement() {
@@ -170,30 +171,30 @@ public class StageStepTest {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("demo", WorkflowJob.class);
                 WorkflowRun b1 = p.getBuildByNumber(1);
                 WorkflowRun b3 = p.getBuildByNumber(3);
-                    assertTrue(b1.isBuilding());
-                    story.j.assertLogNotContains("done", b1);
-                    CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
-                    e1.waitForSuspension();
-                    assertTrue(b3.isBuilding());
-                    story.j.assertLogNotContains("in B", b3);
-                    CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
-                    e3.waitForSuspension();
-                    SemaphoreStep.success("X/1", null);
-                    e1.waitForSuspension();
-                    assertFalse(b1.isBuilding());
-                    assertEquals(Result.SUCCESS, b1.getResult());
-                    story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b1);
-                    e3.waitForSuspension();
-                    assertTrue(b3.isBuilding());
-                    story.j.assertLogContains("done", b1);
-                    story.j.assertLogContains("in B", b3);
-                    story.j.assertLogNotContains("done", b3);
-                    SemaphoreStep.success("X/2", null);
-                    e3.waitForSuspension();
-                    assertFalse(b3.isBuilding());
-                    assertEquals(Result.SUCCESS, b3.getResult());
-                    story.j.assertLogContains("done", b3);
-                    story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b3);
+                assertTrue(b1.isBuilding());
+                story.j.assertLogNotContains("done", b1);
+                CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
+                e1.waitForSuspension();
+                assertTrue(b3.isBuilding());
+                story.j.assertLogNotContains("in B", b3);
+                CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
+                e3.waitForSuspension();
+                SemaphoreStep.success("X/1", null);
+                e1.waitForSuspension();
+                assertFalse(b1.isBuilding());
+                assertEquals(Result.SUCCESS, b1.getResult());
+                story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b1);
+                e3.waitForSuspension();
+                assertTrue(b3.isBuilding());
+                story.j.assertLogContains("done", b1);
+                story.j.assertLogContains("in B", b3);
+                story.j.assertLogNotContains("done", b3);
+                SemaphoreStep.success("X/2", null);
+                e3.waitForSuspension();
+                assertFalse(b3.isBuilding());
+                assertEquals(Result.SUCCESS, b3.getResult());
+                story.j.assertLogContains("done", b3);
+                story.j.assertLogContains(Messages.StageStepExecution_non_block_mode_deprecated(), b3);
             }
         });
     }
@@ -205,14 +206,14 @@ public class StageStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                         "try {\n" +
-                        "  stage name: 'S', concurrency: 1\n" +
-                        "  echo 'in A'\n" +
-                        "  semaphore 'serializability'\n" +
-                        "} finally {\n" +
-                        "  node {\n" +
-                        "    echo 'in finally'\n" +
-                        "  }\n" +
-                        "}"));
+                                "  stage name: 'S', concurrency: 1\n" +
+                                "  echo 'in A'\n" +
+                                "  semaphore 'serializability'\n" +
+                                "} finally {\n" +
+                                "  node {\n" +
+                                "    echo 'in finally'\n" +
+                                "  }\n" +
+                                "}"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("serializability/1", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
@@ -237,10 +238,10 @@ public class StageStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                         "stage name: 'A', concurrency: 1\n" +
-                        "semaphore 'holdingAfterUnblockA'\n" +
-                        "stage name: 'B', concurrency: 1\n" +
-                        "semaphore 'holdingAfterUnblockB'\n" +
-                        ""));
+                                "semaphore 'holdingAfterUnblockA'\n" +
+                                "stage name: 'B', concurrency: 1\n" +
+                                "semaphore 'holdingAfterUnblockB'\n" +
+                                ""));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterUnblockA/1", b1); // about to leave A
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
@@ -261,8 +262,8 @@ public class StageStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                         "stage name: 'A', concurrency: 1\n" +
-                        "semaphore 'holdingAfterExitUnblock'\n" +
-                        ""));
+                                "semaphore 'holdingAfterExitUnblock'\n" +
+                                ""));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterExitUnblock/1", b1); // about to leave
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
