@@ -55,8 +55,8 @@ public class StageStepTest {
         StageStepExecution.clear();
     }
 
-   /* @Issue("JENKINS-26107")
-    @Test public void blockMode() throws Exception {
+    @Issue("JENKINS-26107")
+  /*  @Test public void blockMode() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");

@@ -21,10 +21,6 @@
     <orderEntry type="library" name="Maven: org.jenkins-ci.plugins.workflow:workflow-step-api:2.16" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.plugins.workflow:workflow-step-api:tests:2.16" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.plugins.workflow:workflow-job:2.24" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.modules:instance-identity:2.1" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.modules:windows-slave-installer:1.9" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.jenkins-ci.modules:sshd:1.11" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: org.apache.sshd:sshd-core:0.14.0" level="project" />
     <orderEntry type="library" name="Maven: org.jenkins-ci.plugins.workflow:workflow-api:2.15" level="project" />
     <orderEntry type="library" name="Maven: org.jenkins-ci.plugins:structs:1.6" level="project" />
     <orderEntry type="library" name="Maven: org.jenkins-ci:symbol-annotation:1.6" level="project" />

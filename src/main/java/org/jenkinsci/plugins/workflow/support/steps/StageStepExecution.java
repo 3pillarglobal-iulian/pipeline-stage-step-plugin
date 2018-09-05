@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
@@ -24,7 +25,6 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
-import org.jenkinsci.plugins.workflow.cps.replay.ReplayAction;
 import org.jenkinsci.plugins.workflow.cps.replay.ReplayCause;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
@@ -66,6 +66,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     public boolean start() throws Exception {
 
         if (canSkipStage()) {
+            createCheckpoint();
             skipStage();
             return false;
         }
@@ -425,10 +426,14 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
     private boolean checkpointFileExist(String path) {
         Path source = Paths.get(path);
+        Stream<Path> stream = Stream.empty();
         try {
-            return Files.walk(source).filter(Files::isRegularFile).anyMatch(file -> file.getFileName().toString().equals(step.name));
+            stream = Files.walk(source);
+            return stream.filter(Files::isRegularFile).anyMatch(file -> file.getFileName().toString().equals(step.name));
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(WARNING,null, e);
+        } finally {
+            stream.close();
         }
         return false;
     }
@@ -439,5 +444,12 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         enter(run, getContext(), step.name, step.concurrency);
         exit(run);
         println(getContext(), "Skipping stage " + step.name);
+    }
+
+    private void createCheckpoint() {
+        CheckpointBuilder checkpointBuilder = new CheckpointBuilder(step.name);
+        Job<?, ?> job = run.getParent();
+        String jobName = job.getFullName();
+        checkpointBuilder.createCheckpointFile(jobName, run.number);
     }
 }
